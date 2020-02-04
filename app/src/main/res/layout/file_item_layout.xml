@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <ImageView
+        android:id="@+id/fileNameBackground"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#424242"
+        app:layout_constraintBottom_toBottomOf="@+id/fileNameTextView"
+        app:layout_constraintEnd_toEndOf="@+id/fileViewPageTextView"
+        app:layout_constraintStart_toStartOf="@+id/fileNameTextView"
+        app:layout_constraintTop_toTopOf="@+id/fileNameTextView"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/fileNameTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:fontFamily="sans-serif-light"
+        android:paddingLeft="12dip"
+        android:paddingTop="4dip"
+        android:paddingBottom="4dip"
+        android:text="FileName"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/fileViewPageTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="0dp" />
+
+    <TextView
+        android:id="@+id/fileViewPageTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginEnd="2dp"
+        android:fontFamily="sans-serif-light"
+        android:paddingTop="4dip"
+        android:paddingBottom="4dip"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/fileNameTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/fileNameTextView" />
+</androidx.constraintlayout.widget.ConstraintLayout>

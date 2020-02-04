@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    tools:context=".FileListActivity">
+
+    <TextView
+        android:id="@+id/openFileTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#252525"
+        android:fontFamily="@font/nanum__barungothicbold"
+        android:paddingLeft="8dip"
+        android:paddingTop="6dip"
+        android:paddingRight="8dip"
+        android:paddingBottom="4dip"
+        android:text="@string/file_file_open_text"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/placeholderBtn"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clickable="false"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ListView
+        android:id="@+id/fileListView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="2dp"
+        android:background="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/openFileTextView"
+        tools:layout_editor_absoluteX="0dp">
+
+    </ListView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

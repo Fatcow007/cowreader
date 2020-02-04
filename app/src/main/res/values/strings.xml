@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">카우 리더</string>
+    <string name="file_previous_file_text">최근 파일 : </string>
+    <string name="file_open_btn_text">파일 새로 열기</string>
+    <string name="file_open_recent_btn_text">최근 파일 열기</string>
+    <string name="file_recent_file_not_found_text">\n최근 파일이 없습니다.
+        \n파일 새로 열기를 이용해 주세요.</string>
+    <string name="file_recent_file_found_text">\n[최근 파일]\n</string>
+    <string name="file_file_open_text">파일 열기</string>
+    <string name="comic_viewdir_btn_text">보는방향</string>
+    <string name="comic_page_btn_text">페이지</string>
+    <string name="comic_zoom_btn_text">여백제거</string>
+    <string name="comic_touch_gesture_btn_text">터치동작</string>
+    <string name="comic_change_chapter_btn_text">목차</string>
+    <string name="text_text_size_btn_text">글자크기</string>
+    <string name="text_encoding_btn_text">인코딩</string>
+    <string name="text_search_btn_text">검색</string>
+    <string name="text_change_line_btn_text">줄 변경</string>
+    <string name="text_search_prev_btn_text">이전</string>
+    <string name="text_search_next_btn_text">다음</string>
+    <string name="chapter_change_order_btn_text">정렬 순서 변경</string>
+
+    <string name="toast_encoding">인코딩</string>
+    <string name="toast_first_page">첫 페이지 입니다</string>
+    <string name="toast_last_page">마지막 페이지 입니다</string>
+    <string name="toast_left_to_right">좌에서 우로 넘기기</string>
+    <string name="toast_right_to_left">우에서 좌로 넘기기</string>
+    <string name="toast_touch_and_gesture">둘 다 사용</string>
+    <string name="toast_touch_only">터치만 사용</string>
+    <string name="toast_gesture_only">제스쳐만 사용</string>
+    <string name="toast_search_not_found">검색 결과가 없습니다!</string>
+    <string name="toast_pdf_not_supported">PDF목차는 지원되지 않습니다</string>
+    <string name="toast_file_not_found">파일이 존재하지 않습니다</string>
+    <string name="toast_zip_file_empty">압축파일이 잘못되었습니다</string>
+    <string name="toast_zip_file_directory_error">이중 폴더형식의 압축파일은 지원하지 않습니다</string>
+
+    <string name="number_crop">자르기</string>
+    <string name="number_text_size">글자 크기</string>
+    <string name="number_line_height">줄 간격</string>
+    <string name="number_page">페이지</string>
+    <string name="number_line">번째 줄</string>
+
+    <string name="preference_file_key">fatcowSharedPrefKey</string>
+</resources>
