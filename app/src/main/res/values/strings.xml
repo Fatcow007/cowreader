@@ -8,6 +8,7 @@
     <string name="file_recent_file_found_text">\n[최근 파일]\n</string>
     <string name="file_file_open_text">파일 열기</string>
     <string name="file_change_root_directory_text">내/외부 저장소 변경</string>
+    <string name="file_file_directory_placeholder_text">[파일 주소]</string>
     <string name="comic_viewdir_btn_text">보는방향</string>
     <string name="comic_page_btn_text">페이지</string>
     <string name="comic_zoom_btn_text">여백제거</string>

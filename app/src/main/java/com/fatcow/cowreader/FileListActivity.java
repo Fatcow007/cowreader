@@ -111,6 +111,7 @@ public class FileListActivity extends AppCompatActivity {
             findViewById(R.id.changeRootStorageBtn).setAlpha((float)0.5);
             findViewById(R.id.changeRootStorageBtn).setEnabled(false);
         }
+        ((TextView)findViewById(R.id.fileDirectoryTextView)).setText(currentDirectory);
         _updateListView();
     }
 
@@ -216,9 +217,6 @@ public class FileListActivity extends AppCompatActivity {
     private ArrayList<File> _getDirectoryList(){
         ArrayList<File> directoryList = new ArrayList<>();
         File currentDirFile = new File(currentDirectory);
-        if (currentDirFile.getParent() != null && !pathEqualsRootDir(currentDirectory)){
-            directoryList.add(currentDirFile.getParentFile());
-        }
         File[] fileArray = currentDirFile.listFiles();
         if(fileArray != null){
             Arrays.sort(fileArray);
@@ -330,9 +328,7 @@ public class FileListActivity extends AppCompatActivity {
             TextView fileViewPageTextView =  v.findViewById(R.id.fileViewPageTextView);
             File f = files.get(i);
             String fileName = f.getName();
-            if(i == 0 && parentDirExists){
-                fileName = fileName.concat("..");
-            }else if(f.isDirectory()){
+            if(f.isDirectory()){
                 fileName = fileName.concat("/");
             }
             fileNameTextView.setText(fileName);
