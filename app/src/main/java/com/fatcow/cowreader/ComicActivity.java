@@ -689,6 +689,8 @@ public class ComicActivity extends AppCompatActivity{
                     chapters.remove(rootChapter);
                     Collections.sort(chapters);
                     chapters.add(0, rootChapter);
+                }else{
+                    Collections.sort(chapters);
                 }
 
                 //Sort pages
