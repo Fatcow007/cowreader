@@ -6,12 +6,15 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -78,6 +81,23 @@ public class FileListActivity extends AppCompatActivity {
             @Override
             public void onDebouncedClick(View v) {
                 _changeRootDirectory();
+            }
+        });
+
+        ((EditText)findViewById(R.id.searchFileText)).addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                _updateUi();
             }
         });
 
@@ -219,7 +239,17 @@ public class FileListActivity extends AppCompatActivity {
                 }
             }
         }
-        return directoryList;
+
+        //Search filter
+        //Empty string is automatically in all strings
+        ArrayList<File> filteredDirectoryList = new ArrayList<>();
+        for(File f : directoryList){
+            String fn = f.getName().toLowerCase();
+            if(fn.contains(getSearchString().toLowerCase())){
+                filteredDirectoryList.add(f);
+            }
+        }
+        return filteredDirectoryList;
     }
 
     private boolean _isCompatible(File f){
@@ -244,6 +274,10 @@ public class FileListActivity extends AppCompatActivity {
             }
         }
         return false;
+    }
+
+    private String getSearchString(){
+        return ((EditText)findViewById((R.id.searchFileText))).getText().toString();
     }
 
 

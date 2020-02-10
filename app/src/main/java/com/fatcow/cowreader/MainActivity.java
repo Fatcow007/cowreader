@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
         //Initializes needed UI elements
 
         //Open File Button
-        findViewById(R.id.openFileBtn).setOnClickListener(new DebouncedOnClickListener(2000) {
+        findViewById(R.id.openFileBtn).setOnClickListener(new DebouncedOnClickListener(200) {
             @Override
             public void onDebouncedClick(View view) {
                 Intent openFileListActivity = new Intent(getApplicationContext(), FileListActivity.class);
@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         //Open Recent File Button
-        findViewById(R.id.openRecentFileBtn).setOnClickListener(new DebouncedOnClickListener(2000) {
+        findViewById(R.id.openRecentFileBtn).setOnClickListener(new DebouncedOnClickListener(200) {
             @Override
             public void onDebouncedClick(View view) {
                 Intent openFileListActivity = new Intent(getApplicationContext(), FileListActivity.class);
