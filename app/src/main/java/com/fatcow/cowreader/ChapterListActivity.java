@@ -1,34 +1,28 @@
 package com.fatcow.cowreader;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.Button;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Hashtable;
 
 public class ChapterListActivity extends AppCompatActivity {
 
     private int currentPage;
     private int currentChap;
     private String selectedFile;
-    private ArrayList<String> fileChapters;
-    private ChapterAdapter chapterAdapter;
-    private ListView chapterListview;
-    private TextView chapterFileTitleTextView;
-    private Button chapterOrderChangeBtn;
-    private int sortType;
-    private Hashtable<String, ArrayList> zipFileImageContainer;
+    private ArrayList<String> chapterNames;
+    private ArrayList<Integer> chapterPageCounts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,21 +34,17 @@ public class ChapterListActivity extends AppCompatActivity {
         if (getIntent().hasExtra("com.example.folderexplorer.CHAPTERVIEWFILE")) {
             selectedFile = getIntent().getStringExtra("com.example.folderexplorer.CHAPTERVIEWFILE");
         }
-        if (getIntent().hasExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERPAGE")) {
-            currentPage = getIntent().getIntExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERPAGE", 0);
-        }
         if (getIntent().hasExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTER")) {
             currentChap = getIntent().getIntExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTER", 0);
         }
-        if (getIntent().hasExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERS")) {
-            fileChapters = getIntent().getStringArrayListExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERS");
+        if (getIntent().hasExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERPAGE")) {
+            currentPage = getIntent().getIntExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERPAGE", 0);
         }
-        if (getIntent().hasExtra("com.example.folderexplorer.CHAPTERVIEWHASHTABLE")) {
-            Serializable data = getIntent().getSerializableExtra("com.example.folderexplorer.CHAPTERVIEWHASHTABLE");
-            zipFileImageContainer = new Hashtable<String, ArrayList>((HashMap) data);
+        if (getIntent().hasExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERNAMES")) {
+            chapterNames = getIntent().getStringArrayListExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERNAMES");
         }
-        if (getIntent().hasExtra("com.example.folderexplorer.SORTINGOPTIONS")) {
-            sortType = getIntent().getIntExtra("com.example.folderexplorer.SORTINGOPTIONS", ComicActivity.SORTTYPE_BASIC);
+        if (getIntent().hasExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERNAMES")) {
+            chapterPageCounts = getIntent().getIntegerArrayListExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERPAGECOUNTS");
         }
 
         hideSystemUI();
@@ -83,43 +73,19 @@ public class ChapterListActivity extends AppCompatActivity {
     }
 
     private void initViews(){
-        chapterListview = findViewById(R.id.chapterListview);
-        chapterFileTitleTextView = findViewById(R.id.chapterFileTitleTextView);
-
-        chapterFileTitleTextView.setText(selectedFile);
-        chapterListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        ((TextView)(findViewById(R.id.chapterFileTitleTextView))).setText(selectedFile);
+        ((ListView)(findViewById(R.id.chapterListview))).setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 sendSelectedChapter(i);
             }
         });
 
-        chapterOrderChangeBtn = findViewById(R.id.chapterOrderChangeBtn);
-        chapterOrderChangeBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Change ordering option
-                if(sortType == ComicActivity.SORTTYPE_BASIC){
-                    sortType = ComicActivity.SORTTYPE_CUSTOM;
-                }else if(sortType ==ComicActivity.SORTTYPE_CUSTOM){
-                    sortType = ComicActivity.SORTTYPE_NONE;
-                }else if(sortType ==ComicActivity.SORTTYPE_NONE) {
-                    sortType = ComicActivity.SORTTYPE_BASIC;
-                }
-                String currentChapterString = fileChapters.get(currentChap);
-                fileChapters = StaticMethodClass.sort(((ArrayList<String>)fileChapters.clone()), sortType);
-                currentChap = Arrays.asList(fileChapters).indexOf(currentChapterString);
-
-                changeViewItems();
-            }
-        });
     }
 
     private void sendSelectedChapter(int index){
         Intent intent = new Intent();
         intent.putExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTER", index);
-        intent.putExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTERS", fileChapters);
-        intent.putExtra("com.example.folderexplorer.SORTINGOPTIONS", sortType);
         setResult(RESULT_OK, intent);
         finish();
     }
@@ -127,14 +93,70 @@ public class ChapterListActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putExtra("com.example.folderexplorer.SORTINGOPTIONS", sortType);
         setResult(RESULT_CANCELED, intent);
         super.onBackPressed();
     }
 
 
     private void changeViewItems(){
-        chapterAdapter = new ChapterAdapter(this, fileChapters, currentChap, currentPage, zipFileImageContainer);
-        chapterListview.setAdapter(chapterAdapter);
+        ChapterAdapter chapterAdapter = new ChapterAdapter(this, currentChap, currentPage, chapterNames, chapterPageCounts);
+        ((ListView)(findViewById(R.id.chapterListview))).setAdapter(chapterAdapter);
     }
+
+
+
+    private class ChapterAdapter extends BaseAdapter {
+
+        private LayoutInflater mInflater;
+        private int currentChap;
+        private int currentPage;
+        private ArrayList<String> chapterNames;
+        private ArrayList<Integer> chapterPageCounts;
+
+
+        public ChapterAdapter(Context c, int currentCh, int currentPg, ArrayList<String> chNames, ArrayList<Integer> chPageCounts){
+            mInflater = (LayoutInflater)c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            currentChap = currentCh;
+            currentPage = currentPg;
+            chapterNames = chNames;
+            chapterPageCounts = chPageCounts;
+        }
+
+        @Override
+        public int getCount() {
+            return chapterNames.size();
+        }
+
+        @Override
+        public String getItem(int i) {
+            return chapterNames.get(i);
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return i;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            View v = mInflater.inflate(R.layout.chapter_item_layout, null);
+            TextView chapterTextView = v.findViewById(R.id.chapterTextView);
+            TextView chapterSizeTextView = v.findViewById(R.id.chapterSizeTextView);
+
+            chapterTextView.setText(chapterNames.get(i));
+            int totalPage = chapterPageCounts.get(i);
+            int readPage = totalPage;
+            if(i == currentChap){
+                chapterTextView.setTextColor(0xFFFFEB3B);
+                readPage = currentPage + 1;
+            }
+            if(i > currentChap){
+                readPage = 0;
+            }
+            chapterSizeTextView.setText("[" + readPage + "/" +totalPage + "]");
+
+            return v;
+        }
+    }
+
 }
