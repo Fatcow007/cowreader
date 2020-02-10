@@ -774,8 +774,8 @@ public class ComicActivity extends AppCompatActivity{
 
         public Page getPageByPageNumber(int pageNumber){
             int remainingPageNumber = pageNumber;
-            if(pageNumber > getTotalPageCount()){
-                remainingPageNumber = getTotalPageCount();
+            if(pageNumber > getTotalPageCount() - 1){
+                remainingPageNumber = getTotalPageCount() - 1;
             }
             currentPageNumber = pageNumber;
             for(Chapter c:chapters){
