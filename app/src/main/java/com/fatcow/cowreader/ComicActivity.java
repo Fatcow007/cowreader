@@ -258,7 +258,7 @@ public class ComicActivity extends AppCompatActivity{
                 _savePref();
             }
         });
-        findViewById(R.id.option5Btn).setOnClickListener(new DebouncedOnClickListener(2000) {
+        findViewById(R.id.option5Btn).setOnClickListener(new DebouncedOnClickListener(200) {
             @Override
             public void onDebouncedClick(View view) {
                 disableUi(currentActiveLayout);
@@ -384,14 +384,12 @@ public class ComicActivity extends AppCompatActivity{
         disableUi(findViewById(R.id.optionUiContainerLayout));
         if(book.getCurrentPage().requireSubPage()){
             if(currentSubPage == SUBPAGE_RIGHT){
-                currentSubPage = SUBPAGE_LEFT;
                 _loadNewPage(book.getCurrentPage());
             }else{
-                currentSubPage = SUBPAGE_RIGHT;
-                _loadNewPage(book.getPrevPage());
+                _loadNewPage(book.getPrevPage(), SUBPAGE_RIGHT);
             }
         }else{
-            _loadNewPage(book.getPrevPage());
+            _loadNewPage(book.getPrevPage(), SUBPAGE_RIGHT);
         }
         _updateUi();
         _savePref();
@@ -400,11 +398,9 @@ public class ComicActivity extends AppCompatActivity{
         disableUi(findViewById(R.id.optionUiContainerLayout));
         if(book.getCurrentPage().requireSubPage()){
             if(currentSubPage == SUBPAGE_RIGHT){
-                currentSubPage = SUBPAGE_LEFT;
                 _loadNewPage(book.getNextPage());
             }else{
-                currentSubPage = SUBPAGE_RIGHT;
-                _loadNewPage(book.getCurrentPage());
+                _loadNewPage(book.getCurrentPage(), SUBPAGE_RIGHT);
             }
         }else{
             _loadNewPage(book.getNextPage());
@@ -414,6 +410,9 @@ public class ComicActivity extends AppCompatActivity{
     }
 
     private void _loadNewPage(Page p){
+        _loadNewPage(p, SUBPAGE_LEFT);
+    }
+    private void _loadNewPage(Page p, int subPage){
         try {
 
             Point screenSize = _getScreenSize();
@@ -459,11 +458,12 @@ public class ComicActivity extends AppCompatActivity{
             Bitmap subpageImage = originalImage;
             if(p.requireSubPage()){
                 int subPageModifier = 0;
-                if(currentSubPage == SUBPAGE_RIGHT ^ viewDirection == VIEWDIR_REVERSE){
+                if(subPage == SUBPAGE_RIGHT ^ viewDirection == VIEWDIR_REVERSE){
                     subPageModifier = imageWidth/2 - extraView;
                 }
                 imageWidth = imageWidth/2 + extraView;
                 subpageImage = Bitmap.createBitmap(originalImage, subPageModifier, 0, imageWidth, imageHeight);
+                currentSubPage = subPage;
             }
 
             Bitmap finalImage;
@@ -598,7 +598,7 @@ public class ComicActivity extends AppCompatActivity{
 
             String[] sp2 = p.pageImageDirectory.split("/");
             String imageName2 = sp2[sp2.length-1];
-            return imageName1.compareTo(imageName2);
+            return new AlphanumComparator().compare(imageName1, imageName2);
         }
     }
 
@@ -622,9 +622,7 @@ public class ComicActivity extends AppCompatActivity{
             pages.remove(p);
         }
 
-        public void sortPage(){
-            Collections.sort(pages);
-        }
+        public void sortPage(){ Collections.sort(pages); }
 
         public int getChapterPageCount(){
             return pages.size();
@@ -637,7 +635,7 @@ public class ComicActivity extends AppCompatActivity{
 
         @Override
         public int compareTo(Chapter c){
-            return chapterName.compareTo(c.chapterName);
+            return new AlphanumComparator().compare(chapterName, c.chapterName);
         }
     }
 
@@ -742,7 +740,7 @@ public class ComicActivity extends AppCompatActivity{
                     pageNo = pageNo + p.parentChapter.pages.indexOf(p);
                     break;
                 }else{
-                    pageNo = pageNo + p.parentChapter.getChapterPageCount();
+                    pageNo = pageNo + c.getChapterPageCount();
                 }
             }
             return pageNo;
@@ -763,7 +761,7 @@ public class ComicActivity extends AppCompatActivity{
             int remainingPageNumber = pageNumber;
             currentPageNumber = pageNumber;
             for(Chapter c:chapters){
-                if(c.getChapterPageCount() < remainingPageNumber){
+                if(c.getChapterPageCount() <= remainingPageNumber){
                     remainingPageNumber = remainingPageNumber - c.getChapterPageCount();
                 }else{
                     return c;
