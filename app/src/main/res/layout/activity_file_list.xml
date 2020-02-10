@@ -34,13 +34,33 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+
+    <Button
+        android:id="@+id/changeRootStorageBtn"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginEnd="2dp"
+        android:layout_marginBottom="2dp"
+        android:alpha="0.5"
+        android:background="#424242"
+        android:fontFamily="@font/nanum__barungothicbold"
+        android:text="@string/file_change_root_directory_text"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/placeholderBtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <ListView
         android:id="@+id/fileListView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
         android:background="#000000"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/changeRootStorageBtn"
         app:layout_constraintTop_toBottomOf="@+id/openFileTextView"
         tools:layout_editor_absoluteX="0dp">
 

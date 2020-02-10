@@ -7,6 +7,7 @@
         \n파일 새로 열기를 이용해 주세요.</string>
     <string name="file_recent_file_found_text">\n[최근 파일]\n</string>
     <string name="file_file_open_text">파일 열기</string>
+    <string name="file_change_root_directory_text">내/외부 저장소 변경</string>
     <string name="comic_viewdir_btn_text">보는방향</string>
     <string name="comic_page_btn_text">페이지</string>
     <string name="comic_zoom_btn_text">여백제거</string>
@@ -33,6 +34,7 @@
     <string name="toast_file_not_found">파일이 존재하지 않습니다</string>
     <string name="toast_zip_file_empty">압축파일이 잘못되었습니다</string>
     <string name="toast_zip_file_directory_error">이중 폴더형식의 압축파일은 지원하지 않습니다</string>
+    <string name="toast_file_type_not_supported">지원되지 않는 파일 형식입니다.</string>
 
     <string name="number_crop">자르기</string>
     <string name="number_text_size">글자 크기</string>

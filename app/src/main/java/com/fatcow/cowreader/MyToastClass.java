@@ -9,11 +9,12 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MyToastClass {
+class MyToastClass {
 
     public static MyToastClass currentToast;
 
     private Toast toast;
+
 
     public MyToastClass(View b, String s){
         View parent = (View)b.getParent();
