@@ -14,20 +14,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.util.HashMap;
-
 public class MainActivity extends AppCompatActivity {
 
-    /*This is the first activity that appears when app launches
-    * and does following actions.
-    * 1. Checks for permission.
-    * 2. Loads preferences.
-    * 3. Creates an gui for users*/
 
+    private final String[] EXTERNAL_PERMS = {Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE};
+    private final int EXTERNAL_REQUEST = 138;
 
-
-    private HashMap<String, View> uiContainer = new HashMap<String, View>();
-    private String recentFile = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,30 +28,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         //Runs only once after startup
-        PermManager pm = new PermManager(this);
-        pm.getPerms();
+        _requestPerm();
         _initUi();
-        _loadPref();
-        _reloadUI();
     }
     @Override
     public void onResume(){
         super.onResume();
 
-        //Runs every time when this activity becomes active
-        _loadPref();
         _reloadUI();
     }
 
     private void _initUi(){
         //Initializes needed UI elements
-        uiContainer.put("openFileBtn", findViewById(R.id.openFileBtn));
-        uiContainer.put("openRecentFileBtn", findViewById(R.id.openRecentFileBtn));
-        uiContainer.put("selectedFileTextView", findViewById(R.id.selectedFileTextView));
-
 
         //Open File Button
-        uiContainer.get("openFileBtn").setOnClickListener(new DebouncedOnClickListener(2000) {
+        findViewById(R.id.openFileBtn).setOnClickListener(new DebouncedOnClickListener(2000) {
             @Override
             public void onDebouncedClick(View view) {
                 Intent openFileListActivity = new Intent(getApplicationContext(), FileListActivity.class);
@@ -66,77 +50,66 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         //Open Recent File Button
-        uiContainer.get("openRecentFileBtn").setOnClickListener(new DebouncedOnClickListener(2000) {
+        findViewById(R.id.openRecentFileBtn).setOnClickListener(new DebouncedOnClickListener(2000) {
             @Override
             public void onDebouncedClick(View view) {
                 Intent openFileListActivity = new Intent(getApplicationContext(), FileListActivity.class);
-                if(recentFile != null){
-                    openFileListActivity.putExtra("com.example.folderexplorer.DIRECTOPENFILE", recentFile);
+                if(_hasLastOpenFile()){
+                    openFileListActivity.putExtra("com.example.folderexplorer.DIRECTOPENFILE", _getLastOpenFile());
                 }
                 startActivity(openFileListActivity);
             }
         });
-        uiContainer.get("openRecentFileBtn").setEnabled(false);
     }
 
-    private void _reloadUI(){
-        //Sets up text
-        String[] sp = recentFile.split("/");
-        String s;
-        if(sp.length > 0){
-            s = getResources().getString(R.string.file_recent_file_found_text) + sp[sp.length - 1];
+
+    private void _reloadUI() {
+        if(_hasLastOpenFile()){
+            findViewById(R.id.openRecentFileBtn).setEnabled(true);
+            findViewById(R.id.openRecentFileBtn).setAlpha(1);
         }else{
-            s = getResources().getString(R.string.file_recent_file_not_found_text);
+            findViewById(R.id.openRecentFileBtn).setEnabled(false);
+            findViewById(R.id.openRecentFileBtn).setAlpha((float)(0.5));
         }
-        ((TextView)uiContainer.get("selectedFileTextView")).setText(s);
-
+        String s;
+        if(!_hasLastOpenFile()){
+            s = getResources().getString(R.string.file_recent_file_not_found_text);
+        }else{
+            String[] sp = _getLastOpenFile().split("/");
+            s = getResources().getString(R.string.file_recent_file_found_text) + sp[sp.length - 1];
+        }
+        ((TextView)findViewById(R.id.selectedFileTextView)).setText(s);
     }
 
-    private void _loadPref(){
+
+    private String _getLastOpenFile(){
         SharedPreferences sharedPref = this.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-        recentFile = sharedPref.getString("LastViewFile", "");
+        return sharedPref.getString("LastViewFile", "");
     }
 
+    private boolean _hasLastOpenFile(){
+        return !_getLastOpenFile().equals("");
+    }
 
-
-    private class PermManager{
-
-        private final String[] EXTERNAL_PERMS = {Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE};
-        private final int EXTERNAL_REQUEST = 138;
-        private AppCompatActivity c;
-
-        public PermManager(AppCompatActivity activity){
-            c = activity;
-        }
-        private boolean _checkPerm(){
-            boolean allGranted = true;
-            for(String s : EXTERNAL_PERMS){
-                if( PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(c, s) ){
-                    allGranted = false;
-                }
+    private boolean _hasPerm(){
+        boolean granted = true;
+        for(String s : EXTERNAL_PERMS){
+            if( PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, s) ){
+                granted = false;
             }
-            return allGranted;
         }
-        private void _requestPerm() {
+        return granted;
+    }
 
+    private void _requestPerm(){
+        if(!_hasPerm()){
             final int version = Build.VERSION.SDK_INT;
             if (version >= 23) {
-                ActivityCompat.requestPermissions(c,
+                ActivityCompat.requestPermissions(this,
                         EXTERNAL_PERMS,
                         EXTERNAL_REQUEST);
             }
         }
-        private boolean getPerms(){
-            if(!_checkPerm()){
-                _requestPerm();
-                return _checkPerm();
-            }else{
-                return true;
-            }
-        }
     }
-
-
 }
