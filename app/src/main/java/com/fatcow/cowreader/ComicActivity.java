@@ -774,6 +774,9 @@ public class ComicActivity extends AppCompatActivity{
 
         public Page getPageByPageNumber(int pageNumber){
             int remainingPageNumber = pageNumber;
+            if(pageNumber > getTotalPageCount()){
+                remainingPageNumber = getTotalPageCount();
+            }
             currentPageNumber = pageNumber;
             for(Chapter c:chapters){
                 if(c.getChapterPageCount() <= remainingPageNumber){
@@ -787,6 +790,7 @@ public class ComicActivity extends AppCompatActivity{
 
         public Page getPrevPage(){
             if(currentPageNumber == 0){
+                _showToast(getResources().getString(R.string.toast_first_page));
                 return null;
             }
             else{
@@ -795,7 +799,8 @@ public class ComicActivity extends AppCompatActivity{
         }
 
         public Page getNextPage(){
-            if(currentPageNumber == getTotalPageCount()){
+            if(currentPageNumber == getTotalPageCount() - 1){
+                _showToast(getResources().getString(R.string.toast_last_page));
                 return null;
             }
             else{
