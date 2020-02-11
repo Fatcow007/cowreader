@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.io.File;
+
 public class MainActivity extends AppCompatActivity {
 
 
@@ -89,7 +91,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean _hasLastOpenFile(){
-        return !_getLastOpenFile().equals("");
+        String lastOpenFile = _getLastOpenFile();
+        try {
+            File f = new File(lastOpenFile);
+            if(!f.exists()){
+                return false;
+            }
+            return true;
+        }catch(NullPointerException e){
+            return false;
+        }
     }
 
     private boolean _hasPerm(){
