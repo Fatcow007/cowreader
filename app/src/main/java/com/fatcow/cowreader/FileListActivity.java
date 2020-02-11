@@ -260,9 +260,26 @@ public class FileListActivity extends AppCompatActivity {
     }
 
     private void _updateListView(){
-        FileAdapter fileAdapter = new FileAdapter(this, _getDirectoryList());
+        ArrayList<File> dirList = _getDirectoryList();
+        FileAdapter fileAdapter = new FileAdapter(this, dirList);
         fileAdapter.setParentDirExist(!pathEqualsRootDir(currentDirectory));
         ((ListView)findViewById(R.id.fileListView)).setAdapter(fileAdapter);
+        ((ListView)findViewById(R.id.fileListView)).setSelection(getLastReadDirectory(dirList));
+    }
+
+    private int getLastReadDirectory(ArrayList<File> dirList){
+
+        SharedPreferences sharedPref = this.getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+        String lastFileDir = sharedPref.getString("LastViewFile", "");
+        if(!lastFileDir.equals("")){
+            for(File f:dirList){
+                if(f.getAbsolutePath().equals(lastFileDir)){
+                    return dirList.indexOf(f);
+                }
+            }
+        }
+        return 0;
     }
 
     private boolean pathEqualsRootDir(String path){
