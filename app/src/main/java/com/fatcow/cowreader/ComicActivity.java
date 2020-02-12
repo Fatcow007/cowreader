@@ -78,7 +78,6 @@ public class ComicActivity extends AppCompatActivity{
         loadBook();
         loadPref();
         initUi();
-        savePref();
     }
     @Override
     public void onResume(){
@@ -86,6 +85,7 @@ public class ComicActivity extends AppCompatActivity{
         hideSystemUI();
         updateUi();
         reloadPage();
+        savePref();
     }
 
 
@@ -138,6 +138,10 @@ public class ComicActivity extends AppCompatActivity{
         SharedPreferences sharedPref = this.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
         book = new Book(selectedFile, sharedPref.getInt("ComicActivity." + getFileName() + ".currentPage", 0));
+        if(book.totalPage == 0){
+            showToast(getResources().getString(R.string.comic_no_image_file));
+            finish();
+        }
     }
 
     private void initUi() {

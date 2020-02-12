@@ -14,6 +14,7 @@
     <string name="comic_zoom_btn_text">여백제거</string>
     <string name="comic_touch_gesture_btn_text">터치동작</string>
     <string name="comic_change_chapter_btn_text">목차</string>
+    <string name="comic_no_image_file">이미지 파일이 존재하지 않습니다.</string>
     <string name="text_text_size_btn_text">글자크기</string>
     <string name="text_encoding_btn_text">인코딩</string>
     <string name="text_search_btn_text">검색</string>

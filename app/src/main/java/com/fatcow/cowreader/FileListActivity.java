@@ -260,7 +260,7 @@ public class FileListActivity extends AppCompatActivity {
         FileAdapter fileAdapter = new FileAdapter(this, dirList);
         fileAdapter.setParentDirExist(!pathEqualsRootDir(currentDirectory));
         ((ListView)findViewById(R.id.fileListView)).setAdapter(fileAdapter);
-        ((ListView)findViewById(R.id.fileListView)).setSelection(getLastReadDirectory(dirList));
+        //((ListView)findViewById(R.id.fileListView)).setSelection(getLastReadDirectory(dirList));
     }
 
     private int getLastReadDirectory(ArrayList<File> dirList){
