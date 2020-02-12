@@ -31,6 +31,7 @@ public class FileListActivity extends AppCompatActivity {
 
     private String currentDirectory;
     private String currentRootDir;
+    private int lastSelectedItem;
     private final String[] compatibleFileExtensions = {"zip", "txt", "pdf"};
     private static final String DEFAULT_STORAGE_PATH = "/storage/sdcard0";
     private static final String SD_CARD = "sdcard";
@@ -64,9 +65,11 @@ public class FileListActivity extends AppCompatActivity {
     private void _initUi(){
         //Initializes needed UI elements
 
+        lastSelectedItem = 0;
         ((ListView)findViewById(R.id.fileListView)).setOnItemClickListener(new DebouncedItemOnClickListener(2000) {
             @Override
             public void onDebouncedClick(AdapterView<?> adapterView, View view, int i, long l) {
+                lastSelectedItem = i;
                 File selectedFile = _getDirectoryList().get(i);
                 if(selectedFile.isDirectory()){
                     currentDirectory = selectedFile.getAbsolutePath();
@@ -260,7 +263,7 @@ public class FileListActivity extends AppCompatActivity {
         FileAdapter fileAdapter = new FileAdapter(this, dirList);
         fileAdapter.setParentDirExist(!pathEqualsRootDir(currentDirectory));
         ((ListView)findViewById(R.id.fileListView)).setAdapter(fileAdapter);
-        //((ListView)findViewById(R.id.fileListView)).setSelection(getLastReadDirectory(dirList));
+        ((ListView)findViewById(R.id.fileListView)).setSelection(lastSelectedItem);
     }
 
     private int getLastReadDirectory(ArrayList<File> dirList){
