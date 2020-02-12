@@ -5,8 +5,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.pdf.PdfRenderer;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,10 +21,12 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -42,11 +47,11 @@ public class ComicActivity extends AppCompatActivity{
 
     private final int extraView = 15; //shows some extra image in pixels
 
-    private String selectedFile;
-    private int viewDirection;
     private View currentActiveLayout;
     private Book book;
 
+    private String selectedFile;
+    private int viewDirection;
     private int cropSize;
     private int controlType;
     private int currentSubPage;
@@ -62,7 +67,7 @@ public class ComicActivity extends AppCompatActivity{
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         //set content view AFTER ABOVE sequence (to avoid crash)
         setContentView(R.layout.activity_comic);
-        _hideSystemUI();
+        hideSystemUI();
 
         if (getIntent().hasExtra("com.example.folderexplorer.SELECTEDFILE")) {
             selectedFile = getIntent().getStringExtra("com.example.folderexplorer.SELECTEDFILE");
@@ -70,23 +75,22 @@ public class ComicActivity extends AppCompatActivity{
             finish();
         }
 
-
-        _loadBook();
-        _loadPref();
-        _initUi();
-        _savePref();
+        loadBook();
+        loadPref();
+        initUi();
+        savePref();
     }
     @Override
     public void onResume(){
         super.onResume();
-        _hideSystemUI();
-        _updateUi();
-        _reloadPage();
+        hideSystemUI();
+        updateUi();
+        reloadPage();
     }
 
 
     // This snippet hides the system bars.
-    private void _hideSystemUI() {
+    private void hideSystemUI() {
         // Set the IMMERSIVE flag.
         // Set the content to appear under the system bars so that the content
         // doesn't resize when the system bars hide and show.
@@ -100,27 +104,26 @@ public class ComicActivity extends AppCompatActivity{
     }
 
 
-    private String _getFileName(){
+    private String getFileName(){
         String[] fileNameDir = selectedFile.split("/");
         return fileNameDir[fileNameDir.length-1];
     }
 
-    private void _loadPref(){
+    private void loadPref(){
         SharedPreferences sharedPref = this.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-        String fileName = _getFileName();
+        String fileName = getFileName();
         cropSize = sharedPref.getInt("ComicActivity." + fileName + ".cropSize", 0);
         currentSubPage = sharedPref.getInt("ComicActivity." + fileName + ".currentSubPage", SUBPAGE_LEFT);
         controlType = sharedPref.getInt("ComicActivity." + fileName + ".controlType", CONTROLTYPE_BOTH);
         viewDirection = sharedPref.getInt("ComicActivity." + fileName + ".viewDirection", VIEWDIR_NORMAL);
-
     }
 
-    private void _savePref() {
+    private void savePref() {
         SharedPreferences sharedPref = this.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        String fileName = _getFileName();
+        String fileName = getFileName();
         editor.putString("LastViewFile", selectedFile);
         editor.putInt("ComicActivity." + fileName + ".currentPage", book.currentPageNumber);
         editor.putInt("ComicActivity." + fileName + ".totalPage", book.getTotalPageCount());
@@ -131,13 +134,13 @@ public class ComicActivity extends AppCompatActivity{
         editor.apply();
     }
 
-    private void _loadBook(){
+    private void loadBook(){
         SharedPreferences sharedPref = this.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-        book = new Book(selectedFile, sharedPref.getInt("ComicActivity." + _getFileName() + ".currentPage", 0));
+        book = new Book(selectedFile, sharedPref.getInt("ComicActivity." + getFileName() + ".currentPage", 0));
     }
 
-    private void _initUi() {
+    private void initUi() {
 
         //INITIALIZES ALL UI
         final GestureDetector mDetector = new GestureDetector(this, new MyGestureDetector());
@@ -146,7 +149,7 @@ public class ComicActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 if(controlType != CONTROLTYPE_SLIDE){
-                    _goPrevPage();
+                    goPrevPage();
                 }
             }
         });
@@ -160,7 +163,7 @@ public class ComicActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 if(controlType != CONTROLTYPE_SLIDE){
-                    _goNextPage();
+                    goNextPage();
                 }
             }
         });
@@ -173,7 +176,7 @@ public class ComicActivity extends AppCompatActivity{
         findViewById(R.id.menuBtn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                _updateUi();
+                updateUi();
                 toggleUi(findViewById(R.id.optionUiContainerLayout));
                 disableUi(currentActiveLayout);
             }
@@ -198,9 +201,9 @@ public class ComicActivity extends AppCompatActivity{
                     viewDirection = VIEWDIR_NORMAL;
                     msg = getResources().getString(R.string.toast_right_to_left);
                 }
-                _showToast(msg);
-                _savePref();
-                _reloadPage();
+                showToast(msg);
+                savePref();
+                reloadPage();
             }
         });
         findViewById(R.id.option2Btn).setOnClickListener(new View.OnClickListener() {
@@ -234,16 +237,16 @@ public class ComicActivity extends AppCompatActivity{
                     controlType = CONTROLTYPE_BOTH;
                 }
                 String s = toastText[controlType - CONTROLTYPE_BOTH];
-                _showToast(s);
-                _savePref();
+                showToast(s);
+                savePref();
             }
         });
         findViewById(R.id.option5Btn).setOnClickListener(new DebouncedOnClickListener(200) {
             @Override
             public void onDebouncedClick(View view) {
                 disableUi(currentActiveLayout);
-                _startChapterListActivity();
-                _savePref();
+                startChapterListActivity();
+                savePref();
             }
         });
 
@@ -251,7 +254,7 @@ public class ComicActivity extends AppCompatActivity{
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 if(b){
-                    _loadNewPage(book.getPageByPageNumber(i));
+                    loadNewPage(book.getPageByPageNumber(i));
                 }
                 String s = getResources().getString(R.string.number_page) + " " + (i + 1) + "/" + book.getTotalPageCount();
                 ((TextView)findViewById(R.id.currentPageTextView)).setText(s);
@@ -264,7 +267,7 @@ public class ComicActivity extends AppCompatActivity{
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                _savePref();
+                savePref();
             }
         });
 
@@ -286,8 +289,8 @@ public class ComicActivity extends AppCompatActivity{
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                _reloadPage();
-                _savePref();
+                reloadPage();
+                savePref();
             }
         });
 
@@ -302,14 +305,14 @@ public class ComicActivity extends AppCompatActivity{
         findViewById(R.id.comicImageView).post(new Runnable() {
             @Override
             public void run() {
-                _reloadPage();
+                reloadPage();
             }
         });
 
 
     }
 
-    private void _updateUi(){
+    private void updateUi(){
         String[] temp = selectedFile.split("/");
         ((TextView)findViewById(R.id.imageFileTitleTextView)).setText(temp[temp.length - 1]);
         ((SeekBar)findViewById(R.id.pageSeekBar)).setProgress(book.currentPageNumber);
@@ -317,7 +320,7 @@ public class ComicActivity extends AppCompatActivity{
     }
 
 
-    private void _startChapterListActivity() {
+    private void startChapterListActivity() {
         ArrayList<String> chapterNames = new ArrayList<>();
         ArrayList<Integer> chapterPages = new ArrayList<>();
         for(Chapter c:book.chapters){
@@ -338,9 +341,9 @@ public class ComicActivity extends AppCompatActivity{
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1) {
             if(resultCode == RESULT_OK) {
-                _loadNewPage(book.getFirstPageOfChapter(data.getIntExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTER", 0)));
+                loadNewPage(book.getFirstPageOfChapter(data.getIntExtra("com.example.folderexplorer.CHAPTERVIEWCHAPTER", 0)));
             }
-            _updateUi();
+            updateUi();
         }
     }
 
@@ -369,77 +372,96 @@ public class ComicActivity extends AppCompatActivity{
     }
 
 
-    private void _goPrevPage(){
+    private void goPrevPage(){
         disableUi(findViewById(R.id.optionUiContainerLayout));
         if(book.getCurrentPage().requireSubPage()){
             if(currentSubPage == SUBPAGE_RIGHT){
-                _loadNewPage(book.getCurrentPage());
+                loadNewPage(book.getCurrentPage());
             }else{
-                _loadNewPage(book.getPrevPage(), SUBPAGE_RIGHT);
+                loadNewPage(book.getPrevPage(), SUBPAGE_RIGHT);
             }
         }else{
-            _loadNewPage(book.getPrevPage(), SUBPAGE_RIGHT);
+            loadNewPage(book.getPrevPage(), SUBPAGE_RIGHT);
         }
-        _updateUi();
-        _savePref();
+        updateUi();
+        savePref();
     }
-    private void _goNextPage(){
+    private void goNextPage(){
         disableUi(findViewById(R.id.optionUiContainerLayout));
         if(book.getCurrentPage().requireSubPage()){
             if(currentSubPage == SUBPAGE_RIGHT){
-                _loadNewPage(book.getNextPage());
+                loadNewPage(book.getNextPage());
             }else{
-                _loadNewPage(book.getCurrentPage(), SUBPAGE_RIGHT);
+                loadNewPage(book.getCurrentPage(), SUBPAGE_RIGHT);
             }
         }else{
-            _loadNewPage(book.getNextPage());
+            loadNewPage(book.getNextPage());
         }
-        _updateUi();
-        _savePref();
+        updateUi();
+        savePref();
     }
 
-    private void _loadNewPage(Page p){
-        _loadNewPage(p, SUBPAGE_LEFT);
+    private void loadNewPage(BasePage p){
+        loadNewPage(p, SUBPAGE_LEFT);
     }
-    private void _loadNewPage(Page p, int subPage){
+    private void loadNewPage(BasePage p, int subPage){
         try {
-            View civ = findViewById(R.id.comicImageView);
+                View civ = findViewById(R.id.comicImageView);
             int screenWidth = civ.getWidth();
             int screenHeight = civ.getHeight();
             if(screenWidth == 0 || screenHeight == 0){
                 return;
             }
-            ZipFile zf;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                zf = new ZipFile(selectedFile, book.getCurrentCharset());
-            } else {
-                zf = new ZipFile(selectedFile);
+            Bitmap originalImage = null;
+            if(p instanceof ZipPage){
+                ZipFile zf;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    zf = new ZipFile(selectedFile, book.getCurrentCharset());
+                } else {
+                    zf = new ZipFile(selectedFile);
+                }
+
+                ZipEntry ze = new ZipEntry(p.pageImageDirectory);
+                InputStream is = zf.getInputStream(ze);
+
+                BitmapFactory.Options options = new BitmapFactory.Options();
+
+
+                //Uses inJustDecodeBound option to prevent out-of-memory by super large image files
+
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeStream(is, null, options);
+                int sampleWidth = options.outWidth;
+                int sampleHeight = options.outHeight;
+                is.close();
+                //Sets SampleSize to save memory. SampleSize halves if width > height (thus bigger image)
+                options.inSampleSize = Math.max(1, Math.max(sampleWidth/screenWidth, sampleHeight/screenHeight)/2);
+
+                options.inJustDecodeBounds = false;
+
+
+                //Decodes image using options created above
+
+                is = zf.getInputStream(ze);
+                originalImage = BitmapFactory.decodeStream(is, null, options);
+                is.close();
+            }else if(p instanceof PdfPage){
+                File f = new File(p.pageImageDirectory);
+                PdfRenderer renderer = null;
+                ParcelFileDescriptor fileDescriptor = ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
+                if (fileDescriptor != null) {
+                    renderer = new PdfRenderer(fileDescriptor);
+                }
+                PdfRenderer.Page pg = renderer.openPage(((PdfPage) p).pageIndex);
+                int[] colors = new int[pg.getWidth()*pg.getHeight()*4];
+                Arrays.fill(colors, Color.WHITE);
+                originalImage = Bitmap.createBitmap(colors,pg.getWidth()*2, pg.getHeight()*2, Bitmap.Config.ARGB_8888);
+                pg.render(originalImage, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                pg.close();
+
+                // close the renderer
+                renderer.close();
             }
-
-            ZipEntry ze = new ZipEntry(p.pageImageDirectory);
-            InputStream is = zf.getInputStream(ze);
-
-            BitmapFactory.Options options = new BitmapFactory.Options();
-
-
-            //Uses inJustDecodeBound option to prevent out-of-memory by super large image files
-
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeStream(is, null, options);
-            int sampleWidth = options.outWidth;
-            int sampleHeight = options.outHeight;
-            is.close();
-            //Sets SampleSize to save memory. SampleSize halves if width > height (thus bigger image)
-            options.inSampleSize = Math.max(1, Math.max(sampleWidth/screenWidth, sampleHeight/screenHeight)/2);
-
-            options.inJustDecodeBounds = false;
-
-
-            //Decodes image using options created above
-
-            is = zf.getInputStream(ze);
-            Bitmap originalImage = BitmapFactory.decodeStream(is, null, options);
-            is.close();
 
             //Resize image to fit current screen
 
@@ -481,7 +503,7 @@ public class ComicActivity extends AppCompatActivity{
 
                 float newImageRatio = (float)imageWidth/(float)imageHeight;
                 int trueCropX = 0;
-                if(newImageRatio < screenRatio){
+                if(newImageRatio > screenRatio){
                     int newImageWidth = (int)(imageHeight*screenRatio);
                     trueCropX = (imageWidth - newImageWidth)/2;
                     imageHeight = newImageWidth;
@@ -506,11 +528,11 @@ public class ComicActivity extends AppCompatActivity{
         }
     }
 
-    private void _reloadPage(){
-        _loadNewPage(book.getCurrentPage(), currentSubPage);
+    private void reloadPage(){
+        loadNewPage(book.getCurrentPage(), currentSubPage);
     }
 
-    private void _showToast(String s){
+    private void showToast(String s){
         new MyToastClass(findViewById(R.id.option1Btn), s).show();
     }
 
@@ -547,9 +569,9 @@ public class ComicActivity extends AppCompatActivity{
             if(controlType != CONTROLTYPE_TOUCH) {
                 if (Math.abs(v)> Math.abs(v1)) {
                     if (v > 0) {
-                        _goPrevPage();
+                        goPrevPage();
                     } else {
-                        _goNextPage();
+                        goNextPage();
                     }
                     return true;
                 }
@@ -558,14 +580,26 @@ public class ComicActivity extends AppCompatActivity{
         }
     }
 
-    class Page implements Comparable<Page>{
-        public String pageImageDirectory;
-        public Chapter parentChapter;
-        public Page(String imgDir, Chapter parent){
-            pageImageDirectory = imgDir;
+    abstract class BasePage implements Comparable<BasePage>{
+        protected Chapter parentChapter;
+        protected String pageImageDirectory;
+
+        private BasePage(String imgDir, Chapter parent){
             parentChapter = parent;
+            pageImageDirectory = imgDir;
         }
-        public boolean requireSubPage(){
+        abstract boolean requireSubPage();
+
+
+    }
+
+    class ZipPage extends BasePage{
+        private ZipPage(String imgDir, Chapter parent) {
+            super(imgDir, parent);
+        }
+
+        @Override
+        protected boolean requireSubPage(){
             try{
                 ZipFile zf;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -592,8 +626,49 @@ public class ComicActivity extends AppCompatActivity{
             }
             return false;
         }
+
         @Override
-        public int compareTo(Page p){
+        public int compareTo(BasePage p){
+            String[] sp1 = pageImageDirectory.split("/");
+            String imageName1 = sp1[sp1.length-1];
+
+            String[] sp2 = p.pageImageDirectory.split("/");
+            String imageName2 = sp2[sp2.length-1];
+            return new AlphanumComparator().compare(imageName1, imageName2);
+        }
+    }
+
+    class PdfPage extends BasePage{
+
+        private int pageIndex;
+        private PdfPage(String imgDir, Chapter parent, int pg) {
+            super(imgDir, parent);
+            pageIndex = pg;
+        }
+        @Override
+        protected boolean requireSubPage(){
+            boolean result = false;
+            try{
+                File f = new File(pageImageDirectory);
+                PdfRenderer renderer = null;
+                ParcelFileDescriptor fileDescriptor = ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
+                if (fileDescriptor != null) {
+                    renderer = new PdfRenderer(fileDescriptor);
+                }
+
+                PdfRenderer.Page pdfPage = renderer.openPage(pageIndex);
+                result = ((float)pdfPage.getWidth()/(float)pdfPage.getHeight()) > 1;
+
+                // close the renderer
+                renderer.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return result;
+        }
+
+        @Override
+        public int compareTo(BasePage p){
             String[] sp1 = pageImageDirectory.split("/");
             String imageName1 = sp1[sp1.length-1];
 
@@ -607,7 +682,7 @@ public class ComicActivity extends AppCompatActivity{
 
         public String chapterName;
         public Book parentBook;
-        private ArrayList<Page> pages = new ArrayList<>();
+        private ArrayList<BasePage> pages = new ArrayList<>();
 
 
         public Chapter(String cName, Book parent){
@@ -615,21 +690,19 @@ public class ComicActivity extends AppCompatActivity{
             parentBook = parent;
         }
 
-        public void addPage(Page p){
+        public void addPage(BasePage p){
             pages.add(p);
         }
 
-        public void removePage(Page p){
+        public void removePage(BasePage p){
             pages.remove(p);
         }
-
-        public void sortPage(){ Collections.sort(pages); }
 
         public int getChapterPageCount(){
             return pages.size();
         }
 
-        public Page getPage(int pageNumber){
+        public BasePage getPage(int pageNumber){
             return pages.get(pageNumber);
         }
 
@@ -645,13 +718,20 @@ public class ComicActivity extends AppCompatActivity{
         public ArrayList<Chapter> chapters = new ArrayList<>();
         private final Charset[] charsetList = {Charset.forName("UTF-8"), Charset.forName("cp949")};
         private int charsetIndex = 0;
+        private int totalPage = 0;
         public Book(String fileDir, int currentPgNo){
-            _loadFile(fileDir);
+            loadFile(fileDir);
             currentPageNumber = currentPgNo;
         }
 
-
-        private void _loadFile(String zipFileDir) {
+        private void loadFile(String fileDir){
+            if(fileDir.toLowerCase().endsWith("zip")){
+                loadZipFile(fileDir);
+            }else if(fileDir.toLowerCase().endsWith("pdf")){
+                loadPdfFile(fileDir);
+            }
+        }
+        private void loadZipFile(String zipFileDir) {
             try {
                 ZipFile zf;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
@@ -664,29 +744,29 @@ public class ComicActivity extends AppCompatActivity{
                 while (e.hasMoreElements()) {
                     ZipEntry ze = (ZipEntry) e.nextElement();
                     String fileDir= ze.getName();
-                    if (!ze.isDirectory() && _testForImageFileName(fileDir)) {
+                    if (!ze.isDirectory() && testForImageFileName(fileDir)) {
                         String[] sp = fileDir.split("/");
                         if (sp.length == 1){
                             // This is when file is directly in zipfile
                             //If current directory does not exist, make a new one!
-                            if (!_hasChapter("root")) {
-                                _addChapter("root");
+                            if (!hasChapter("root")) {
+                                addChapter("root");
                             }
-                            _getChapterByName("root").addPage(new Page(fileDir, _getChapterByName("root")));
+                            getChapterByName("root").addPage(new ZipPage(fileDir, getChapterByName("root")));
                         }else {
                             //If current directory does not exist, make a new one!
                             String folderName = sp[sp.length - 2];
-                            if (!_hasChapter(folderName)) {
-                                _addChapter(folderName);
+                            if (!hasChapter(folderName)) {
+                                addChapter(folderName);
                             }
-                            _getChapterByName(folderName).addPage(new Page(fileDir, _getChapterByName(folderName)));
+                            getChapterByName(folderName).addPage(new ZipPage(fileDir, getChapterByName(folderName)));
                         }
                     }
                 }
 
                 //Sort but leave the root chapter on top
-                if(_hasChapter("root")){
-                    Chapter rootChapter = _getChapterByName("root");
+                if(hasChapter("root")){
+                    Chapter rootChapter = getChapterByName("root");
                     chapters.remove(rootChapter);
                     Collections.sort(chapters);
                     chapters.add(0, rootChapter);
@@ -696,7 +776,14 @@ public class ComicActivity extends AppCompatActivity{
 
                 //Sort pages
                 for(Chapter c:chapters){
-                    c.sortPage();
+                    Collections.sort(c.pages);
+                }
+
+
+                //Count total pages
+                totalPage = 0;
+                for(Chapter c:chapters){
+                    totalPage = totalPage + c.getChapterPageCount();
                 }
 
 
@@ -707,18 +794,49 @@ public class ComicActivity extends AppCompatActivity{
                 if(charsetIndex == charsetList.length){
                     e.printStackTrace();
                 }else{
-                    _loadFile(zipFileDir);
+                    loadFile(zipFileDir);
                 }
             }
         }
 
+        private void loadPdfFile(String pdfFileDir){
+            try{
+                File f = new File(pdfFileDir);
+                PdfRenderer renderer = null;
+                ParcelFileDescriptor fileDescriptor = ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
+                if (fileDescriptor != null) {
+                    renderer = new PdfRenderer(fileDescriptor);
+                }
+                addChapter("PDF");
+                totalPage = renderer.getPageCount();
+                for (int i = 0; i < totalPage; i++) {
+                    getChapterByName("PDF").addPage(new PdfPage(pdfFileDir, getChapterByName("PDF"), i));
+                    /*
+                    PdfRenderer.Page page = renderer.openPage(i);
 
-        private void _addChapter(String chapterName){
-            if(!_hasChapter(chapterName)){
+                    // say we render for showing on the screen
+                    page.render(mBitmap, null, null, Page.RENDER_MODE_FOR_DISPLAY);
+
+                    // do stuff with the bitmap
+
+                    // close the page
+                    page.close();
+                    */
+                }
+
+                // close the renderer
+                renderer.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void addChapter(String chapterName){
+            if(!hasChapter(chapterName)){
                 chapters.add(new Chapter(chapterName, this));
             }
         }
-        private boolean _hasChapter(String chapterName){
+        private boolean hasChapter(String chapterName){
             for(Chapter c:chapters){
                 if(c.chapterName.equals(chapterName)){
                     return true;
@@ -727,7 +845,7 @@ public class ComicActivity extends AppCompatActivity{
             return false;
         }
 
-        private Chapter _getChapterByName(String chapterName){
+        private Chapter getChapterByName(String chapterName){
             for(Chapter c:chapters){
                 if(c.chapterName.equals(chapterName)){
                     return c;
@@ -736,7 +854,7 @@ public class ComicActivity extends AppCompatActivity{
             return null;
         }
 
-        private int _getPageNumber(Page p){
+        private int getPageNumber(BasePage p){
             int pageNo = 0;
             for(Chapter c: chapters){
                 if(c.chapterName.equals(p.parentChapter.chapterName)){
@@ -750,7 +868,7 @@ public class ComicActivity extends AppCompatActivity{
         }
 
 
-        private boolean _testForImageFileName(String s){
+        private boolean testForImageFileName(String s){
             String[] fileFormatList = {".bmp",".gif",".jpg",".png", "jpeg"};
             for(String ff : fileFormatList){
                 if(s.toLowerCase().endsWith(ff)){
@@ -773,7 +891,7 @@ public class ComicActivity extends AppCompatActivity{
             return null;
         }
 
-        public Page getPageByPageNumber(int pageNumber){
+        public BasePage getPageByPageNumber(int pageNumber){
             int remainingPageNumber = pageNumber;
             if(pageNumber > getTotalPageCount() - 1){
                 remainingPageNumber = getTotalPageCount() - 1;
@@ -789,9 +907,9 @@ public class ComicActivity extends AppCompatActivity{
             return null;
         }
 
-        public Page getPrevPage(){
+        private BasePage getPrevPage(){
             if(currentPageNumber == 0){
-                _showToast(getResources().getString(R.string.toast_first_page));
+                showToast(getResources().getString(R.string.toast_first_page));
                 return null;
             }
             else{
@@ -799,9 +917,9 @@ public class ComicActivity extends AppCompatActivity{
             }
         }
 
-        public Page getNextPage(){
+        private BasePage getNextPage(){
             if(currentPageNumber == getTotalPageCount() - 1){
-                _showToast(getResources().getString(R.string.toast_last_page));
+                showToast(getResources().getString(R.string.toast_last_page));
                 return null;
             }
             else{
@@ -809,29 +927,25 @@ public class ComicActivity extends AppCompatActivity{
             }
         }
 
-        public Page getFirstPageOfChapter(int chapterNumber){
-            Page p = chapters.get(chapterNumber).getPage(0);
-            currentPageNumber = _getPageNumber(p);
+        private BasePage getFirstPageOfChapter(int chapterNumber){
+            BasePage p = chapters.get(chapterNumber).getPage(0);
+            currentPageNumber = getPageNumber(p);
             return chapters.get(chapterNumber).getPage(0);
         }
 
-        public int getTotalPageCount(){
-            int pc = 0;
-            for(Chapter c:chapters){
-                pc = pc + c.getChapterPageCount();
-            }
-            return pc;
+        private int getTotalPageCount(){
+            return totalPage;
         }
 
-        public Page getCurrentPage(){
+        private BasePage getCurrentPage(){
             return getPageByPageNumber(currentPageNumber);
         }
 
-        public Chapter getCurrentChapter(){
+        private Chapter getCurrentChapter(){
             return getChapterByPageNumber(currentPageNumber);
         }
 
-        public Charset getCurrentCharset(){
+        private Charset getCurrentCharset(){
             return charsetList[charsetIndex];
         }
 

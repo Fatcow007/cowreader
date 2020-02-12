@@ -187,11 +187,7 @@ public class FileListActivity extends AppCompatActivity {
             Intent openTextViewActivity = new Intent(getApplicationContext(), TextViewActivity.class);
             openTextViewActivity.putExtra("com.example.folderexplorer.SELECTEDFILE", filePath);
             startActivity(openTextViewActivity);
-        }else if(filePath.endsWith(".zip")){
-            Intent openComicActivity = new Intent(getApplicationContext(), ComicActivity.class);
-            openComicActivity.putExtra("com.example.folderexplorer.SELECTEDFILE", filePath);
-            startActivity(openComicActivity);
-        }else if(filePath.endsWith(".pdf")){
+        }else if(filePath.endsWith(".zip") || filePath.endsWith(".pdf")){
             Intent openComicActivity = new Intent(getApplicationContext(), ComicActivity.class);
             openComicActivity.putExtra("com.example.folderexplorer.SELECTEDFILE", filePath);
             startActivity(openComicActivity);
