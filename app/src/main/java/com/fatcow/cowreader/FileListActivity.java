@@ -26,18 +26,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 public class FileListActivity extends AppCompatActivity {
 
     private String currentDirectory;
     private String currentRootDir;
-    private int lastSelectedItem;
     private final String[] compatibleFileExtensions = {"zip", "txt", "pdf"};
     private static final String DEFAULT_STORAGE_PATH = "/storage/sdcard0";
     private static final String SD_CARD = "sdcard";
     private static final String EXT_SD_CARD = "extsdcard";
     FileAdapter fileAdapter;
     private String[] availableStorageDirectories;
+    private Stack<Integer> fileScrollPos = new Stack<>();
 
 
     @Override
@@ -65,13 +66,12 @@ public class FileListActivity extends AppCompatActivity {
     private void _initUi(){
         //Initializes needed UI elements
 
-        lastSelectedItem = 0;
-        ((ListView)findViewById(R.id.fileListView)).setOnItemClickListener(new DebouncedItemOnClickListener(2000) {
+        ((ListView)findViewById(R.id.fileListView)).setOnItemClickListener(new DebouncedItemOnClickListener(200) {
             @Override
             public void onDebouncedClick(AdapterView<?> adapterView, View view, int i, long l) {
-                lastSelectedItem = i;
                 File selectedFile = _getDirectoryList().get(i);
                 if(selectedFile.isDirectory()){
+                    fileScrollPos.push(((ListView)(findViewById(R.id.fileListView))).getFirstVisiblePosition());
                     currentDirectory = selectedFile.getAbsolutePath();
                     _updateUi();
                 }else{
@@ -83,6 +83,7 @@ public class FileListActivity extends AppCompatActivity {
         findViewById(R.id.changeRootStorageBtn).setOnClickListener(new DebouncedOnClickListener(200) {
             @Override
             public void onDebouncedClick(View v) {
+                fileScrollPos.clear();
                 _changeRootDirectory();
             }
         });
@@ -269,6 +270,13 @@ public class FileListActivity extends AppCompatActivity {
         fileAdapter.notifyDataSetChanged();
     }
 
+    private void changeDirectory(String dir, int index){
+        currentDirectory = dir;
+        _updateListView();
+        ((ListView)findViewById(R.id.fileListView)).setSelection(index);
+
+    }
+
     private int getLastReadDirectory(ArrayList<File> dirList){
 
         SharedPreferences sharedPref = this.getSharedPreferences(
@@ -304,8 +312,7 @@ public class FileListActivity extends AppCompatActivity {
         if(pathEqualsRootDir(currentDirectory)){
             super.onBackPressed();
         }else{
-            currentDirectory = new File(currentDirectory).getParent();
-            _updateUi();
+            changeDirectory(new File(currentDirectory).getParent(), fileScrollPos.pop());
         }
     }
 
