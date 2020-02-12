@@ -5,10 +5,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -76,8 +74,6 @@ public class ComicActivity extends AppCompatActivity{
         _loadBook();
         _loadPref();
         _initUi();
-        _updateUi();
-        _reloadPage();
         _savePref();
     }
     @Override
@@ -85,6 +81,7 @@ public class ComicActivity extends AppCompatActivity{
         super.onResume();
         _hideSystemUI();
         _updateUi();
+        _reloadPage();
     }
 
 
@@ -102,23 +99,6 @@ public class ComicActivity extends AppCompatActivity{
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
-    private Point _getScreenSize(){
-        final int version = android.os.Build.VERSION.SDK_INT;
-        int width, height;
-        Display screen = getWindowManager().getDefaultDisplay();
-        if (version >= 13)
-        {
-            Point size = new Point();
-            screen.getSize(size);
-            return size;
-        }
-        else
-        {
-            width = screen.getWidth();
-            height = screen.getHeight();
-            return new Point(width, height);
-        }
-    }
 
     private String _getFileName(){
         String[] fileNameDir = selectedFile.split("/");
@@ -291,7 +271,9 @@ public class ComicActivity extends AppCompatActivity{
         ((SeekBar)findViewById(R.id.cropSeekBar)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                cropSize = i;
+                if(b){
+                    cropSize = i;
+                }
                 String s = getResources().getString(R.string.number_crop) + " " + (cropSize);
                 ((TextView)findViewById(R.id.cropTextView)).setText(s);
 
@@ -309,13 +291,20 @@ public class ComicActivity extends AppCompatActivity{
             }
         });
 
-        ((SeekBar)findViewById(R.id.cropSeekBar)).setMax((100));
+        ((SeekBar)findViewById(R.id.cropSeekBar)).setMax((50));
         ((SeekBar)findViewById(R.id.cropSeekBar)).setProgress(cropSize);
 
 
         disableUi(findViewById(R.id.pageSeekLayout));
         disableUi(findViewById(R.id.cropSizeLayout));
         disableUi(findViewById(R.id.optionUiContainerLayout));
+
+        findViewById(R.id.comicImageView).post(new Runnable() {
+            @Override
+            public void run() {
+                _reloadPage();
+            }
+        });
 
 
     }
@@ -414,10 +403,12 @@ public class ComicActivity extends AppCompatActivity{
     }
     private void _loadNewPage(Page p, int subPage){
         try {
-
-            Point screenSize = _getScreenSize();
-            int screenWidth = screenSize.x;
-            int screenHeight = screenSize.y;
+            View civ = findViewById(R.id.comicImageView);
+            int screenWidth = civ.getWidth();
+            int screenHeight = civ.getHeight();
+            if(screenWidth == 0 || screenHeight == 0){
+                return;
+            }
             ZipFile zf;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 zf = new ZipFile(selectedFile, book.getCurrentCharset());
@@ -439,7 +430,7 @@ public class ComicActivity extends AppCompatActivity{
             int sampleHeight = options.outHeight;
             is.close();
             //Sets SampleSize to save memory. SampleSize halves if width > height (thus bigger image)
-            options.inSampleSize = Math.max(1, Math.max(sampleWidth/screenSize.x, sampleHeight/screenSize.y)/2);
+            options.inSampleSize = Math.max(1, Math.max(sampleWidth/screenWidth, sampleHeight/screenHeight)/2);
 
             options.inJustDecodeBounds = false;
 
@@ -469,26 +460,36 @@ public class ComicActivity extends AppCompatActivity{
             Bitmap finalImage;
             float screenRatio = (float)screenWidth/(float)screenHeight;
             float imageRatio = (float)imageWidth/(float)imageHeight;
-            float scaleRatio;
             if(imageRatio > screenRatio){
-                scaleRatio = (float)(imageWidth)/(float)(screenWidth);
-                int trueCropX = (int)(cropSize*scaleRatio);
-                int trueCropY = (int)(trueCropX/imageRatio);
-
+                int trueCropX = (int)(cropSize/200.0*imageWidth);
                 imageWidth = imageWidth - 2*trueCropX;
-                imageHeight = imageHeight - 2*trueCropY;
+
+                float newImageRatio = (float)imageWidth/(float)imageHeight;
+                int trueCropY = 0;
+                if(newImageRatio < screenRatio){
+                    int newImageHeight = (int)(imageWidth/screenRatio);
+                    trueCropY = (imageHeight - newImageHeight)/2;
+                    imageHeight = newImageHeight;
+                }
+
+                newImageRatio = (float)imageWidth/(float)imageHeight;
                 finalImage = Bitmap.createBitmap(subpageImage, trueCropX, trueCropY, imageWidth, imageHeight);
-                finalImage = Bitmap.createScaledBitmap(finalImage, screenWidth, (int)(screenWidth/imageRatio), true);
+                finalImage = Bitmap.createScaledBitmap(finalImage, screenWidth, (int)(screenWidth/newImageRatio), true);
             }else{
-                scaleRatio = imageHeight/screenHeight;
+                int trueCropY = (int)(cropSize/200.0*imageHeight);
+                imageWidth = imageWidth - 2*trueCropY;
 
-                int trueCropY = (int)(cropSize*scaleRatio);
-                int trueCropX = (int)(trueCropY*imageRatio);
+                float newImageRatio = (float)imageWidth/(float)imageHeight;
+                int trueCropX = 0;
+                if(newImageRatio < screenRatio){
+                    int newImageWidth = (int)(imageHeight*screenRatio);
+                    trueCropX = (imageWidth - newImageWidth)/2;
+                    imageHeight = newImageWidth;
+                }
 
-                imageWidth = imageWidth - 2*trueCropX;
-                imageHeight = imageHeight - 2*trueCropY;
+                newImageRatio = (float)imageWidth/(float)imageHeight;
                 finalImage = Bitmap.createBitmap(subpageImage, trueCropX, trueCropY, imageWidth, imageHeight);
-                finalImage = Bitmap.createScaledBitmap(finalImage, (int)(screenHeight*imageRatio), screenHeight, true);
+                finalImage = Bitmap.createScaledBitmap(finalImage, (int)(screenHeight*newImageRatio), screenHeight, true);
             }
             //Handle null image
             if(originalImage == null){
@@ -506,7 +507,7 @@ public class ComicActivity extends AppCompatActivity{
     }
 
     private void _reloadPage(){
-        _loadNewPage(book.getCurrentPage());
+        _loadNewPage(book.getCurrentPage(), currentSubPage);
     }
 
     private void _showToast(String s){
