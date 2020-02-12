@@ -36,7 +36,7 @@ public class FileListActivity extends AppCompatActivity {
     private static final String DEFAULT_STORAGE_PATH = "/storage/sdcard0";
     private static final String SD_CARD = "sdcard";
     private static final String EXT_SD_CARD = "extsdcard";
-
+    FileAdapter fileAdapter;
     private String[] availableStorageDirectories;
 
 
@@ -104,6 +104,11 @@ public class FileListActivity extends AppCompatActivity {
             }
         });
 
+        fileAdapter = new FileAdapter(this, _getDirectoryList(), !pathEqualsRootDir(currentDirectory));
+        ((ListView)findViewById(R.id.fileListView)).setAdapter(fileAdapter);
+
+        //Prevents resizing due to nav bar
+        this.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
     }
 
     private void _updateUi(){
@@ -260,10 +265,8 @@ public class FileListActivity extends AppCompatActivity {
 
     private void _updateListView(){
         ArrayList<File> dirList = _getDirectoryList();
-        FileAdapter fileAdapter = new FileAdapter(this, dirList);
-        fileAdapter.setParentDirExist(!pathEqualsRootDir(currentDirectory));
-        ((ListView)findViewById(R.id.fileListView)).setAdapter(fileAdapter);
-        ((ListView)findViewById(R.id.fileListView)).setSelection(lastSelectedItem);
+        fileAdapter.update(dirList, !pathEqualsRootDir(currentDirectory));
+        fileAdapter.notifyDataSetChanged();
     }
 
     private int getLastReadDirectory(ArrayList<File> dirList){
@@ -312,13 +315,14 @@ public class FileListActivity extends AppCompatActivity {
         List<File> files;
         boolean parentDirExists;
 
-        public FileAdapter(Context c, List<File> f){
+        public FileAdapter(Context c, List<File> f, boolean parentDirEx){
             mInflater = (LayoutInflater)c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             files = f;
-            parentDirExists = false;
+            parentDirExists = parentDirEx;
         }
 
-        public void setParentDirExist(boolean b){
+        public void update(List<File> f, boolean b){
+            files = f;
             parentDirExists = b;
         }
 
